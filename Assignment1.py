@@ -20,14 +20,19 @@ print(df.describe())
 #Some Random Figures 
 fig = px.scatter(df, x="SepalWidthCm", y="SepalLengthCm", color="Species", size='PetalLengthCm',
                  hover_data=['PetalWidthCm'])
+#fig.show()
 
 fig2 = px.bar(df, x="SepalWidthCm", y="SepalLengthCm", color="Species")
+#fig2.show()
 
 fig3 = px.box(df, y="PetalWidthCm", color="Species", points='all')
+#fig3.show()
 
 fig4 = px.violin(df, y="PetalLengthCm", color="Species", violinmode='overlay', hover_data=df.columns)
+#fig4.show()
 
 fig5 = px.ecdf(df, x="SepalLengthCm", y="SepalWidthCm", color="Species", ecdfnorm=None)
+#fig5.show()
 
 #we can tell Setosa tend to have larger sepal width, while versicolor and virginica have larger sepal length
 
