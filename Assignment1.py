@@ -8,12 +8,16 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 from sklearn.pipeline import Pipeline
 
+#Loading data into Pandas
 df = pd.read_csv('https://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data',
                  names=["SepalLengthCm", "SepalWidthCm", "PetalLengthCm", "PetalWidthCm", "Species"])
 print(df)
 
+#Summarizing stats
 print(df.describe())
 
+
+#Some Random Figures 
 fig = px.scatter(df, x="SepalWidthCm", y="SepalLengthCm", color="Species", size='PetalLengthCm',
                  hover_data=['PetalWidthCm'])
 
@@ -25,6 +29,9 @@ fig4 = px.violin(df, y="PetalLengthCm", color="Species", violinmode='overlay', h
 
 fig5 = px.ecdf(df, x="SepalLengthCm", y="SepalWidthCm", color="Species", ecdfnorm=None)
 
+#we can tell Setosa tend to have larger sepal width, while versicolor and virginica have larger sepal length
+
+#Train and Test Datasets
 X = df.drop('Species', axis=1)
 y = df['Species']
 
@@ -36,6 +43,7 @@ scale.fit(X_train)
 X_train_sc = scale.transform(X_train)
 X_test_sc = scale.transform(X_test)
 
+#Random Forest
 clf = RandomForestClassifier(n_estimators=100)
 clf.fit(X_train_sc, y_train)
 predictor = clf.predict(X_test_sc)
@@ -45,6 +53,7 @@ pipeline.fit(X_train_sc, y_train)
 r2 = pipeline.score(X_test_sc, y_test)
 print(f"RFR: {r2}")
 
+#Other models - SVC and Logistic Regression
 svclassifier = SVC(kernel='poly', degree=8)
 svclassifier.fit(X_train_sc, y_train)
 
