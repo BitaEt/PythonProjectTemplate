@@ -40,3 +40,10 @@ select t2.batter , avg(t2.batting_average)  from t2
 right join t1 on t2.batter = t1.batter
 where t2.local_date > date_add(t1.max, INTERVAL -100 DAY)
 group by t1.batter);
+
+--Explanation about temporary tables:
+--I just created those since I thought we have to store the answers in a new table, but if not those tables are not needed and can simply be removed from the query
+
+drop table baseball.annual_batting_average;
+drop table baseball.total_batting_average;
+drop table baseball.rolling_batting_average;
