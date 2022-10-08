@@ -1,8 +1,36 @@
 import sys
-
-from pyspark import StorageLevel
-from pyspark.ml.regression import RandomForestRegressor
+from pyspark import keyword_only
+from pyspark.ml import Pipeline, Transformer
+from pyspark.ml.param.shared import HasInputCols, HasOutputCol
+from pyspark.ml.util import DefaultParamsReadable, DefaultParamsWritable
 from pyspark.sql import SparkSession
+from pyspark.ml.regression import GeneralizedLinearRegression
+
+class transformer(
+    Transformer,
+    HasInputCols,
+    HasOutputCol,
+    DefaultParamsReadable,
+    DefaultParamsWritable,
+):
+    @keyword_only
+    def _init_(self, inputCols=None, outputCol=None):
+        super(transformer, self)._init_()
+        kwargs = self._input_kwargs
+        self.setParams(**kwargs)
+        return
+
+    @keyword_only
+    def setParams(self, inputCols=None, outputCol=None):
+        kwargs = self._input_kwargs
+        return self._set(**kwargs)
+
+    def _transform(self, dataset):
+        input_cols = self.getInputCols()
+        output_col = self.getOutputCol()
+
+        return dataset.show()
+
 
 
 def main():
@@ -21,7 +49,7 @@ def main():
     sql1 = "select * from baseball.batter_counts"
     database = "baseball"
     user = "bita"
-    password = "salam"
+    password = ""
     server = "localhost"
     port = 3306
     jdbc_url = f"jdbc:mysql://{server}:{port}/{database}?permitMysqlScheme"
@@ -43,7 +71,7 @@ def main():
     sql2 = "select * from baseball.game"
     database = "baseball"
     user = "bita"
-    password = "salam"
+    password = ""
     server = "localhost"
     port = 3306
     jdbc_url = f"jdbc:mysql://{server}:{port}/{database}?permitMysqlScheme"
@@ -65,12 +93,9 @@ def main():
 
     df1.createOrReplaceTempView("batter_counts")
     df2.createOrReplaceTempView("game")
-    df1.persist(StorageLevel.DISK_ONLY)
-    df2.persist(StorageLevel.DISK_ONLY)
 
-    results = spark.sql(
-        """drop table if exists rolling_batting_average;
-        create table rolling_batting_average (with t1 as
+    rolling_average = spark.sql(
+        """with t1 as
         (select btc.batter, max(gm.local_date) as max_date, btc.game_id from batter_counts btc
         left join game gm
         on btc.game_id = gm.game_id
@@ -82,23 +107,27 @@ def main():
         left join game gm
         on btc.game_id = gm.game_id
         group by btc.batter, btc.game_id)
-        select t2.batter , avg(t2.batting_average)  from t2
+        select t2.batter , t2.batting_average from t2
         right join t1 on t2.batter = t1.batter
         where t2.local_date > date_add(t1.max_date, INTERVAL -100 DAY)
         group by t1.batter, t1.game_id)"""
     )
-    results.show()
+    rolling_average.show()
+    return
 
-    # Random Forest
-    random_forest = RandomForestRegressor(
-        labelCol="batter",
-        featuresCol="batting_average",
-        numTrees=100,
-        predictionCol="pred_survived",
-    )
-    random_forest_fitted = random_forest.fit(results)
-    results_df = random_forest_fitted.transform(results)
-    results_df.show()
+    transformer = transformer()
+
+    glr = GeneralizedLinearRegression(family="gaussian", link="identity", maxIter=10, regParam=0.3,
+                                      labelCol="batting_average",
+                                      predictionCol="pred ",
+                                      probabilityCol="prob_batting_avg",
+                                      rawPredictionCol="raw_pred_batting_avg")
+
+    
+    pipeline = Pipeline(stages=[transformer, glr])
+    model = pipeline.fit(rolling_average)
+    rolling_average= model.transform(rolling_average)
+    rolling_average.show()
 
     return
 
