@@ -325,9 +325,10 @@ for i in responses:
         plt.xlabel("Random Forest Feature Importance")
 
 
-        #Bin number based on Scot's Rule
+          #Bin number based on Scot's Rule
 
         pred_stdev = statistics.stdev(predictor_ols)
+        pred_mean = statistics.mean(predictor_ols)
         bin_width = 3.49*(pred_stdev)*(len(predictor_ols))**(-(1/3))
         bin_number = round(bin_width/len(predictor_ols))
 
@@ -336,9 +337,41 @@ for i in responses:
         num = round(len(df) / bin_number)
         list_df = [predictor_ols[i:i + num] for i in range(0, predictor_ols.shape[0], num)]
 
+
         means =[]
-        if i in responses:
-            for j in range(0, num-2):
-                chunk_mean = statistics.mean(list_df[j])
-                means.append(chunk_mean)
+        lower_bin = []
+        upper_bin = []
+        bin_center = []
+        bin_count = []
+        for j in range(0, num-2):
+            lower_bin.append(list_df[j][0])
+            upper_bin.append(list_df[j][-1])
+            bin_count.append(len(list_df[j]))
+            chunk_mean = statistics.mean(list_df[j])
+            means.append(chunk_mean)
         print(means)
+        print(lower_bin)
+        print(upper_bin)
+        print(bin_count)
+
+        i_list = list(range(0, num-2))
+
+        for i in means:
+            pop_mean = (means - pred_mean)**2
+
+        unweighted = pop_mean/bin_number
+        print(unweighted)
+
+
+        unweighted_table = pd.DataFrame(
+            {'i': i_list,
+             'lower bin': lower_bin,
+             'upper bin': upper_bin,
+             'bin count': bin_count,
+             'bin means': means,
+             'population mean': pop_mean,
+             'MeanSquaredDiff': unweighted
+
+             })
+
+        print(unweighted_table)
