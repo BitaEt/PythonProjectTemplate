@@ -1,3 +1,4 @@
+import sys
 import pandas as pd
 import plotly.express as px
 import statsmodels
@@ -6,6 +7,11 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder
+from plotly import graph_objects as go
+import numpy
+from plotly import figure_factory as ff
+from sklearn.metrics import confusion_matrix
+from itertools import combinations
 
 df = pd.read_csv(
     "https://raw.githubusercontent.com/mwaskom/seaborn-data/master/titanic.csv"
@@ -84,148 +90,179 @@ for i in responses:
 
 x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.20)
 
+# I created a dictionary because of the sake of interpretation but lists are easier to work with in this plot example.
+
+predictors_con = []
+predictors_cat = []
+for i in predictors:
+    if i in list(continuous):
+        predictors_con.append(i)
+    else:
+        predictors_cat.append(i)
+
+
 # Plotting the variables
 
-# def cont_resp_cat_predictor():
-#     n = 200
-#
-#     # Add histogram data
-#     x1 =
-#     x2 =
-#     x3 =
-#
-#     # Group data together
-#     hist_data = [x1, x2, x3, x4]
-#
-#     group_labels = ["Group 1", "Group 2", "Group 3", "Group 4"]
-#
-#     # Create distribution plot with custom bin_size
-#     fig_1 = ff.create_distplot(hist_data, group_labels, bin_size=0.2)
-#     fig_1.update_layout(
-#         title="Continuous Response by Categorical Predictor",
-#         xaxis_title="Response",
-#         yaxis_title="Distribution",
-#     )
-#     fig_1.show()
-#
-#     fig_2 = go.Figure()
-#     for curr_hist, curr_group in zip(hist_data, group_labels):
-#         fig_2.add_trace(
-#             go.Violin(
-#                 x=numpy.repeat(curr_group, n),
-#                 y=curr_hist,
-#                 name=curr_group,
-#                 box_visible=True,
-#                 meanline_visible=True,
-#             )
-#         )
-#     fig_2.update_layout(
-#         title="Continuous Response by Categorical Predictor",
-#         xaxis_title="Groupings",
-#         yaxis_title="Response",
-#     )
-#     fig_2.show()
-#
-#     return
-#
-#
-# def cat_resp_cont_predictor():
-#     n = 200
-#
-#     # Add histogram data
-#     x1 =
-#     x3 =
-#
-#     # Group data together
-#     hist_data = [x1, x3]
-#
-#     group_labels = ["Response = 0", "Response = 1"]
-#
-#     # Create distribution plot with custom bin_size
-#     fig_1 = ff.create_distplot(hist_data, group_labels, bin_size=0.2)
-#     fig_1.update_layout(
-#         title="Continuous Predictor by Categorical Response",
-#         xaxis_title="Predictor",
-#         yaxis_title="Distribution",
-#     )
-#     fig_1.show()
-#
-#     fig_2 = go.Figure()
-#     for curr_hist, curr_group in zip(hist_data, group_labels):
-#         fig_2.add_trace(
-#             go.Violin(
-#                 x=numpy.repeat(curr_group, n),
-#                 y=curr_hist,
-#                 name=curr_group,
-#                 box_visible=True,
-#                 meanline_visible=True,
-#             )
-#         )
-#     fig_2.update_layout(
-#         title="Continuous Predictor by Categorical Response",
-#         xaxis_title="Response",
-#         yaxis_title="Predictor",
-#     )
-#     fig_2.show()
-#
-#     return
-#
-#
-# def cat_response_cat_predictor():
-#     n = 200
-#     x =
-#     y =
-#
-#     x_2 = [1 if abs(x_) > 0.5 else 0 for x_ in x]
-#     y_2 = [1 if abs(y_) > 0.5 else 0 for y_ in y]
-#
-#     conf_matrix = confusion_matrix(x_2, y_2)
-#
-#     fig_no_relationship = go.Figure(
-#         data=go.Heatmap(z=conf_matrix, zmin=0, zmax=conf_matrix.max())
-#     )
-#     fig_no_relationship.update_layout(
-#         title="Categorical Predictor by Categorical Response (without relationship)",
-#         xaxis_title="Response",
-#         yaxis_title="Predictor",
-#     )
-#     fig_no_relationship.show()
-#
-#     x = numpy.random.randn(n)
-#     y = x + numpy.random.randn(n)
-#
-#     x_2 = [1 if abs(x_) > 1.5 else 0 for x_ in x]
-#     y_2 = [1 if abs(y_) > 1.5 else 0 for y_ in y]
-#
-#     conf_matrix = confusion_matrix(x_2, y_2)
-#
-#     fig_no_relationship = go.Figure(
-#         data=go.Heatmap(z=conf_matrix, zmin=0, zmax=conf_matrix.max())
-#     )
-#     fig_no_relationship.update_layout(
-#         title="Categorical Predictor by Categorical Response (with relationship)",
-#         xaxis_title="Response",
-#         yaxis_title="Predictor",
-#     )
-#     fig_no_relationship.show()
-#
-#     return
-#
-#
-# def cont_response_cont_predictor():
-#     n = 200
-#     x = numpy.random.randn(n) - 2
-#     y = x + numpy.random.randn(n) / 5
-#
-#     fig = px.scatter(x=x, y=y, trendline="ols")
-#     fig.update_layout(
-#         title="Continuous Response by Continuous Predictor",
-#         xaxis_title="Predictor",
-#         yaxis_title="Response",
-#     )
-#     fig.show()
-#
-#     return
+def cont_resp_cat_predictor():
+
+    n = 200
+
+    # Add histogram data and group data together
+    for i in predictors:
+        if i in predictors_cat and len(predictors_cat) > 2:
+            hist_data = list(combinations(predictors_cat, 3))
+        elif i in predictors_cat and 0 < len(predictors_cat) < 3:
+            hist_data = list(combinations(predictors_cat, len(predictors_cat)))
+
+    for j in df.columns:
+        if j in responses and response_type == 'continuous':
+            group_labels = sorted(df[i].unique())
+
+    # Create distribution plot with custom bin_size
+    fig_1 = ff.create_distplot(hist_data, group_labels, bin_size=0.2)
+    fig_1.update_layout(
+        title="Continuous Response by Categorical Predictor",
+        xaxis_title="Response",
+        yaxis_title="Distribution",
+    )
+    fig_1.show()
+
+    fig_2 = go.Figure()
+    for curr_hist, curr_group in zip(hist_data, group_labels):
+        fig_2.add_trace(
+            go.Violin(
+                x=numpy.repeat(curr_group, n),
+                y=curr_hist,
+                name=curr_group,
+                box_visible=True,
+                meanline_visible=True,
+            )
+        )
+    fig_2.update_layout(
+        title="Continuous Response by Categorical Predictor",
+        xaxis_title="Groupings",
+        yaxis_title="Response",
+    )
+    fig_2.show()
+
+    return
+
+
+def cat_resp_cont_predictor():
+    n = 200
+
+    # Add histogram data
+    hist_data = []
+    for i in predictors:
+        if i in predictors_con and len(predictors_con) > 2:
+            hist_data = list(combinations(predictors_con, 3))
+        elif i in predictors_cat and 0 < len(predictors_con) < 3:
+            hist_data = list(combinations(predictors_con, len(predictors_con)))
+
+    for i in df.columns:
+        if i in responses and response_type == 'categorical':
+            group_labels = sorted(df[i].unique())
+
+
+    # Create distribution plot with custom bin_size
+    fig_1 = ff.create_distplot(hist_data, group_labels, bin_size=0.2)
+    fig_1.update_layout(
+        title="Continuous Predictor by Categorical Response",
+        xaxis_title="Predictor",
+        yaxis_title="Distribution",
+    )
+    fig_1.show()
+
+    fig_2 = go.Figure()
+    for curr_hist, curr_group in zip(hist_data, group_labels):
+        fig_2.add_trace(
+            go.Violin(
+                x=numpy.repeat(curr_group, n),
+                y=curr_hist,
+                name=curr_group,
+                box_visible=True,
+                meanline_visible=True,
+            )
+        )
+    fig_2.update_layout(
+        title="Continuous Predictor by Categorical Response",
+        xaxis_title="Response",
+        yaxis_title="Predictor",
+    )
+    fig_2.show()
+
+    return
+
+def cat_response_cat_predictor():
+    n = 200
+
+    x = []
+    for i in predictors:
+        if i in predictors_cat and len(predictors_cat) > 2:
+            x = list(*combinations(predictors_cat, 3))
+        elif i in predictors_cat and 0 < len(predictors_cat) < 3:
+            x = list(*combinations(predictors_cat, len(predictors_cat)))
+
+    for i in df.columns:
+        if i in responses and response_type == 'categorical':
+            y = sorted(df[i].unique())
+
+    x_2 = [1 if abs(x_) > 0.5 else 0 for x_ in x]
+    y_2 = [1 if abs(y_) > 0.5 else 0 for y_ in y]
+
+    conf_matrix = confusion_matrix(x_2, y_2)
+
+    fig_no_relationship = go.Figure(
+        data=go.Heatmap(z=conf_matrix, zmin=0, zmax=conf_matrix.max())
+    )
+    fig_no_relationship.update_layout(
+        title="Categorical Predictor by Categorical Response (without relationship)",
+        xaxis_title="Response",
+        yaxis_title="Predictor",
+    )
+    fig_no_relationship.show()
+
+
+    x_2 = [1 if abs(x_) > 1.5 else 0 for x_ in x]
+    y_2 = [1 if abs(y_) > 1.5 else 0 for y_ in y]
+
+    conf_matrix = confusion_matrix(x_2, y_2)
+
+    fig_no_relationship = go.Figure(
+        data=go.Heatmap(z=conf_matrix, zmin=0, zmax=conf_matrix.max())
+    )
+    fig_no_relationship.update_layout(
+        title="Categorical Predictor by Categorical Response (with relationship)",
+        xaxis_title="Response",
+        yaxis_title="Predictor",
+    )
+    fig_no_relationship.show()
+
+    return
+
+
+def cont_response_cont_predictor():
+    n = 200
+    x = []
+    for i in predictors:
+        if i in predictors_con and len(predictors_con) > 2:
+            x = list(*combinations(predictors_con, 3))
+        elif i in predictors_con and 0 < len(predictors_con) < 3:
+            x = list(*combinations(predictors_con, len(predictors_con)))
+
+    for i in df.columns:
+        if i in responses and response_type == 'categorical':
+            y = sorted(df[i].unique())
+
+    fig = px.scatter(x=x, y=y, trendline="ols")
+    fig.update_layout(
+        title="Continuous Response by Continuous Predictor",
+        xaxis_title="Predictor",
+        yaxis_title="Response",
+    )
+    fig.show()
+
+    return
 
 
 # creating models based on response category
